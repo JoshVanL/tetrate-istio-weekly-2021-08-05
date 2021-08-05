@@ -1,0 +1,377 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: certificaterequestpolicies.policy.cert-manager.io
+spec:
+  group: policy.cert-manager.io
+  names:
+    categories:
+    - cert-manager
+    kind: CertificateRequestPolicy
+    listKind: CertificateRequestPolicyList
+    plural: certificaterequestpolicies
+    shortNames:
+    - crp
+    singular: certificaterequestpolicy
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: CertificateRequestPolicy is the Schema for the certificaterequestpolicies
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              allowedCommonName:
+                type: string
+              allowedDNSNames:
+                items:
+                  type: string
+                type: array
+              allowedEmailAddresses:
+                items:
+                  type: string
+                type: array
+              allowedIPAddresses:
+                items:
+                  type: string
+                type: array
+              allowedIsCA:
+                type: boolean
+              allowedIssuer:
+                items:
+                  description: ObjectReference is a reference to an object with a
+                    given name, kind and group.
+                  properties:
+                    group:
+                      description: Group of the resource being referred to.
+                      type: string
+                    kind:
+                      description: Kind of the resource being referred to.
+                      type: string
+                    name:
+                      description: Name of the resource being referred to.
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              allowedPrivateKey:
+                properties:
+                  allowedAlgorithm:
+                    enum:
+                    - RSA
+                    - ECDSA
+                    type: string
+                  maxSize:
+                    type: integer
+                  minSize:
+                    description: Values are inclusive (i.e. a min value with 2048
+                      will accept a size of 2048). MinSize and MaxSize may be the
+                      same.
+                    type: integer
+                type: object
+              allowedSubject:
+                properties:
+                  allowedCountries:
+                    items:
+                      type: string
+                    type: array
+                  allowedLocalities:
+                    items:
+                      type: string
+                    type: array
+                  allowedOrganizationalUnits:
+                    items:
+                      type: string
+                    type: array
+                  allowedOrganizations:
+                    items:
+                      type: string
+                    type: array
+                  allowedPostalCodes:
+                    items:
+                      type: string
+                    type: array
+                  allowedProvinces:
+                    items:
+                      type: string
+                    type: array
+                  allowedSerialNumber:
+                    type: string
+                  allowedStreetAddresses:
+                    items:
+                      type: string
+                    type: array
+                type: object
+              allowedURIs:
+                items:
+                  type: string
+                type: array
+              allowedUsages:
+                items:
+                  description: 'KeyUsage specifies valid usage contexts for keys.
+                    See: https://tools.ietf.org/html/rfc5280#section-4.2.1.3      https://tools.ietf.org/html/rfc5280#section-4.2.1.12
+                    Valid KeyUsage values are as follows: "signing", "digital signature",
+                    "content commitment", "key encipherment", "key agreement", "data
+                    encipherment", "cert sign", "crl sign", "encipher only", "decipher
+                    only", "any", "server auth", "client auth", "code signing", "email
+                    protection", "s/mime", "ipsec end system", "ipsec tunnel", "ipsec
+                    user", "timestamping", "ocsp signing", "microsoft sgc", "netscape
+                    sgc"'
+                  enum:
+                  - signing
+                  - digital signature
+                  - content commitment
+                  - key encipherment
+                  - key agreement
+                  - data encipherment
+                  - cert sign
+                  - crl sign
+                  - encipher only
+                  - decipher only
+                  - any
+                  - server auth
+                  - client auth
+                  - code signing
+                  - email protection
+                  - s/mime
+                  - ipsec end system
+                  - ipsec tunnel
+                  - ipsec user
+                  - timestamping
+                  - ocsp signing
+                  - microsoft sgc
+                  - netscape sgc
+                  type: string
+                type: array
+              maxDuration:
+                type: string
+              minDuration:
+                description: Values are inclusive (i.e. a min value with 50s will
+                  accept a duration with 50s). MinDuration and MaxDuration may be
+                  the same.
+                type: string
+            type: object
+          status:
+            properties:
+              conditions:
+                items:
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    message:
+                      type: string
+                    observedGeneration:
+                      format: int64
+                      type: integer
+                    reason:
+                      type: string
+                    status:
+                      description: ConditionStatus represents a condition's status.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: policy-approver
+  namespace: cert-manager
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: policy-approver:leader-election
+  namespace: cert-manager
+rules:
+- apiGroups:
+  - coordination.k8s.io
+  - ""
+  resources:
+  - leases
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: policy-approver
+rules:
+- apiGroups:
+  - policy.cert-manager.io
+  - cert-manager.io
+  resources:
+  - certificaterequestpolicies
+  - certificaterequests
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - cert-manager.io
+  resources:
+  - certificaterequests/status
+  verbs:
+  - update
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: policy-approver:approve
+rules:
+- apiGroups:
+  - cert-manager.io
+  resourceNames:
+  - issuers.cert-manager.io/*
+  - clusterissuers.cert-manager.io/*
+  - googlecasissuers.cas-issuer.jetstack.io/*
+  resources:
+  - signers
+  verbs:
+  - approve
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: policy-approver:leader-election
+  namespace: cert-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: policy-approver:leader-election
+subjects:
+- kind: ServiceAccount
+  name: policy-approver
+  namespace: cert-manager
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: policy-approver
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: policy-approver
+subjects:
+- kind: ServiceAccount
+  name: policy-approver
+  namespace: cert-manager
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: policy-approver:approve
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: policy-approver:approve
+subjects:
+- kind: ServiceAccount
+  name: policy-approver
+  namespace: cert-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: policy-approver
+  namespace: cert-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: policy-approver
+  template:
+    metadata:
+      labels:
+        app: policy-approver
+    spec:
+      containers:
+      - command:
+        - /policy-approver
+        image: quay.io/joshvanl_jetstack/policy-approver:v0.1.0-alpha.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: policy-approver
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: policy-approver
+      terminationGracePeriodSeconds: 10

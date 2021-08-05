@@ -1,0 +1,98 @@
+apiVersion: policy.cert-manager.io/v1alpha1
+kind: CertificateRequestPolicy
+metadata:
+  name: istio-csr-serving
+spec:
+  allowedDNSNames:
+  - "cert-manager-istio-csr.cert-manager.svc"
+  allowedUsages:
+  - server auth
+  - client auth
+  allowedIssuer:
+  - name: istio-ca
+    kind: GoogleCASIssuer
+    group: cas-issuer.jetstack.io
+---
+apiVersion: policy.cert-manager.io/v1alpha1
+kind: CertificateRequestPolicy
+metadata:
+  name: istiod-serving
+spec:
+  allowedCommonName: ""
+  allowedDNSNames:
+  - istiod.istio-system.svc
+  allowedURIs:
+  - "spiffe://foo.bar/ns/istio-system/sa/istiod-service-account"
+  allowedUsages:
+  - server auth
+  - client auth
+  allowedIssuer:
+  - name: istio-ca
+    kind: GoogleCASIssuer
+    group: cas-issuer.jetstack.io
+---
+apiVersion: policy.cert-manager.io/v1alpha1
+kind: CertificateRequestPolicy
+metadata:
+  name: istio-workloads
+spec:
+  allowedCommonName: ""
+  allowedDNSNames: []
+  allowedURIs:
+  - "spiffe://foo.bar/ns/*"
+  allowedUsages:
+  - server auth
+  - client auth
+  allowedIssuer:
+  - name: istio-ca
+    kind: GoogleCASIssuer
+    group: cas-issuer.jetstack.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cert-manager-policy:istio-csr
+rules:
+  - apiGroups: ["policy.cert-manager.io"]
+    resources: ["certificaterequestpolicies"]
+    verbs: ["use"]
+    resourceNames:
+    - "istio-csr-serving"
+    - "istio-workloads"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-manager-policy:istio-csr
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cert-manager-policy:istio-csr
+subjects:
+- kind: ServiceAccount
+  name: cert-manager-istio-csr
+  namespace: cert-manager
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cert-manager-policy:cert-manager
+rules:
+  - apiGroups: ["policy.cert-manager.io"]
+    resources: ["certificaterequestpolicies"]
+    verbs: ["use"]
+    resourceNames:
+    - "istiod-serving"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-manager-policy:cert-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cert-manager-policy:cert-manager
+subjects:
+- kind: ServiceAccount
+  name: cert-manager
+  namespace: cert-manager

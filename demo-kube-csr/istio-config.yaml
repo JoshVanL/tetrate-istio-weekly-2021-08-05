@@ -1,0 +1,54 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  profile: "demo"
+  components:
+    base:
+      k8s:
+        overlays:
+          - kind: ClusterRole
+            name: istiod-istio-system
+            patches:
+              - path: rules[-1]
+                value: |
+                  apiGroups:
+                  - certificates.k8s.io
+                  resourceNames:
+                  - issuers.cert-manager.io/*
+                  resources:
+                  - signers
+                  verbs:
+                  - approve
+              - path: rules[-1]
+                value: |
+                  apiGroups:
+                  - cert-manager.io
+                  resourceNames:
+                  - "*"
+                  resources:
+                  - signers
+                  verbs:
+                  - reference
+    pilot:
+      k8s:
+        env:
+          - name: EXTERNAL_CA
+            value: ISTIOD_RA_KUBERNETES_API
+          - name: K8S_SIGNER
+            value: issuers.cert-manager.io/istio-system.vault
+        overlays:
+        - kind: Deployment
+          name: istiod
+          patches:
+            - path: spec.template.spec.containers[0].volumeMounts[-1]
+              value: |
+                # Mount external CA certificate into Istiod
+                name: external-ca-cert
+                mountPath: /etc/external-ca-cert
+                readOnly: true
+            - path: spec.template.spec.volumes[-1]
+              value: |
+                name: external-ca-cert
+                secret:
+                  secretName: external-ca-cert
+                  optional: true

@@ -1,0 +1,19 @@
+app:
+  certmanager:
+    preserveCertificateRequests: true
+    issuer:
+      name: istio-ca
+      kind: GoogleCASIssuer
+      group: cas-issuer.jetstack.io
+  tls:
+    trustDomain: foo.bar
+    rootCAFile: /etc/tls/root-cert.pem
+
+volumes:
+- name: root-ca
+  secret:
+    secretName: istio-ca-root-cert
+
+volumeMounts:
+- name: root-ca
+  mountPath: /etc/tls
